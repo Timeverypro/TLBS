@@ -141,12 +141,12 @@ app.put('/api/loans/:id/return', async (req, res) => {
   }
 });
 
-// Catch-all route to serve index.html for any frontend navigation
-app.get('*', (req, res) => {
+// Catch-all route using a Regex to avoid path-to-regexp parsing errors
+app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Start the server (uses Render's dynamic port or falls back to 3000 locally)
+// Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
