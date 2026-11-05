@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Community Library & Barcode Scanner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- HTML5 QR Code & Barcode Scanner Library -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8">
+
+  <div class="max-w-4xl mx-auto space-y-8">
+    <!-- Header -->
+    <header class="text-center space-y-2">
+      <h1 class="text-3xl font-extrabold text-indigo-400">📚 Community Library System</h1>
+      <p class="text-slate-400">Scan barcodes to borrow & return books in real-time</p>
+    </header>
+
+    <!-- Barcode Scanner Section -->
+    <section class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+      <h2 class="text-xl font-bold text-slate-200 flex items-center gap-2">
+        <span>📷 Barcode Scanner</span>
+      </h2>
+      <div id="reader" class="w-full bg-slate-950 rounded-xl overflow-hidden border border-slate-800"></div>
+      <div id="scan-result" class="hidden p-4 rounded-xl bg-indigo-950/50 border border-indigo-500/30 text-indigo-300 text-sm"></div>
+    </section>
+
+    <!-- Book Catalog -->
+    <section class="space-y-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-xl font-bold text-slate-200">📖 Library Catalog</h2>
+        <button onclick="fetchBooks()" class="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition">
+          🔄 Refresh
+        </button>
+      </div>
+
+      <div id="book-list" class="grid gap-4 sm:grid-cols-2">
+        <p class="text-slate-500 text-sm italic col-span-2">Loading library catalog...</p>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const API_URL = '/api/books';
+
+    // Fetch and display all books
+    async function fetchBooks() {
+      const container = document.getElementById('book-list');
+      try {
+        const res = await fetch(API_URL);
+        const books = await res.json();
+        
+        if (!books.length) {
+          container.innerHTML = `<p class="text-slate-500 text-sm italic col-span-2">No books found in the library database.</p>`;
+          return;
+        }
+
+        container.innerHTML = books.map(book => `
+          <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl space-y-3 shadow-md">
+            <div class="flex justify-between items-start gap-2">
+              <div>
+                <h3 class="font-bold text-slate-100 text-lg">${escapeHtml(book.title)}</h3>
+                <p class="text-xs text-slate-400">by ${escapeHtml(book.author || 'Unknown')}</p>
+              </div>
+              <span class="px-2.5 py-1 text-xs font-semibold rounded-full ${
+                book.status === 'available' 
+                  ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' 
+                  : 'bg-amber-950 text-amber-400 border border-amber-800'
+              }">
+                ${book.status}
+              </span>
+            </div>
+            
+            ${book.description ? `<p class="text-xs text-slate-300 bg-slate-900/50 p-2.5 rounded-lg border border-slate-800/80">${escapeHtml(book.description)}</p>` : ''}
+
+            <div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-700/50">
+              <span>Barcode: <code class="font-mono text-indigo-300 bg-slate-900 px-1.5 py-0.5 rounded">${escapeHtml(book.barcode_id || 'N/A')}</code></span>
+              <span>Owner: ${escapeHtml(book.owner_name || 'Community Member')}</span>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = `<p class="text-rose-400 text-sm col-span-2">Failed to load catalog: ${err.message}</p>`;
+      }
+    }
+
+    // Helper function to escape HTML special characters
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // Initialize Barcode Scanner
+    function onScanSuccess(decodedText, decodedResult) {
+      const resultDiv = document.getElementById('scan-result');
+      resultDiv.classList.remove('hidden');
+      resultDiv.innerHTML = `<strong>Scanned Barcode:</strong> ${escapeHtml(decodedText)}`;
+    }
+
+    const html5QrcodeScanner = new Html5QrcodeScanner(
+      "reader", 
+      { fps: 10, qrbox: { width: 250, height: 150 } },
+      /* verbose= */ false
+    );
+    html5QrcodeScanner.render(onScanSuccess);
+
+    // Initial Load
+    fetchBooks();
+  </script>
+</body>
+</html>

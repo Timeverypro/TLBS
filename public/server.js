@@ -1,0 +1,1 @@
+app.use(express.static('public')); // Serves static web pages from the public folder
