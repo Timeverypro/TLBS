@@ -165,19 +165,23 @@
           const previewBox = document.getElementById('barcode-preview-box');
           previewBox.classList.remove('hidden');
 
-          // 2. Generate barcode directly into the <img> tag
+          // 2. Generate barcode using an in-memory canvas and convert to data URL
           try {
-            JsBarcode("#barcode-img", payload.barcodeId, {
+            const canvas = document.createElement('canvas');
+            JsBarcode(canvas, payload.barcodeId, {
               format: "CODE128",
               width: 2,
               height: 60,
               displayValue: true
             });
+            const dataUrl = canvas.toDataURL("image/png");
 
-            // 3. Attach the generated image source directly to the download button
+            // 3. Assign data URL to image source and download link
             const barcodeImg = document.getElementById('barcode-img');
+            barcodeImg.src = dataUrl;
+
             const downloadBtn = document.getElementById('download-btn');
-            downloadBtn.href = barcodeImg.src;
+            downloadBtn.href = dataUrl;
             downloadBtn.download = `${payload.barcodeId}-label.png`;
           } catch (err) {
             console.error("Barcode generation failed:", err);
