@@ -34,15 +34,15 @@ app.get('/api/books', async (req, res) => {
 });
 
 // ==========================================
-// 2. ADD A NEW BOOK (With custom barcode)
+// 2. ADD A NEW BOOK (With ISBN & custom barcode)
 // ==========================================
 app.post('/api/books', async (req, res) => {
-  const { ownerId, title, author, description, barcodeId } = req.body;
+  const { ownerId, title, author, description, barcodeId, isbn } = req.body;
   
   try {
     const [newBook] = await sql`
-      INSERT INTO books (owner_id, title, author, description, barcode_id)
-      VALUES (${ownerId}, ${title}, ${author}, ${description}, ${barcodeId})
+      INSERT INTO books (owner_id, title, author, description, barcode_id, isbn)
+      VALUES (${ownerId}, ${title}, ${author}, ${description}, ${barcodeId}, ${isbn || null})
       RETURNING *;
     `;
     res.status(201).json({ success: true, book: newBook });
