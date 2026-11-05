@@ -19,7 +19,7 @@
       <p class="text-slate-400">Track copies via ISBN & scan custom physical barcodes</p>
     </header>
 
-    <!-- Navigation / Action Tabs -->
+    <!-- Navigation / Action Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       
       <!-- Left: Barcode Scanner Section -->
@@ -69,7 +69,7 @@
     <!-- Printable Barcode Preview Box (Hidden until generated) -->
     <div id="barcode-preview-box" class="hidden bg-white text-slate-900 p-6 rounded-2xl shadow-2xl text-center space-y-4 max-w-md mx-auto">
       <h3 class="font-bold text-lg text-slate-800">Printable Book Barcode Label</h3>
-      <div class="flex justify-center"><svg id="barcode-svg"></svg></div>
+      <div class="flex justify-center overflow-x-auto"><canvas id="barcode-canvas"></canvas></div>
       <p id="preview-book-info" class="text-xs font-medium text-slate-600"></p>
       <button onclick="window.print()" class="px-4 py-2 bg-slate-900 text-white text-xs font-bold rounded-lg hover:bg-slate-800">🖨️ Print Label</button>
     </div>
@@ -95,7 +95,7 @@
       document.getElementById('barcodeId').value = randomCode;
     }
 
-    // Fetch and display all books with ISBN counts
+    // Fetch and display all books
     async function fetchBooks() {
       const container = document.getElementById('book-list');
       try {
@@ -154,9 +154,17 @@
         if (data.success) {
           alert('Book copy registered successfully!');
           
-          // Render Barcode SVG preview so they can print it immediately
-          document.getElementById('barcode-preview-box').classList.remove('hidden');
-          JsBarcode("#barcode-svg", payload.barcodeId, { format: "CODE128", width: 2, height: 60, displayValue: true });
+          // Unhide the preview box first, then render the barcode onto the canvas
+          const previewBox = document.getElementById('barcode-preview-box');
+          previewBox.classList.remove('hidden');
+
+          JsBarcode("#barcode-canvas", payload.barcodeId, {
+            format: "CODE128",
+            width: 2,
+            height: 60,
+            displayValue: true
+          });
+
           document.getElementById('preview-book-info').innerText = `${payload.title} (ISBN: ${payload.isbn || 'N/A'})`;
 
           fetchBooks();
