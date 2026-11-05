@@ -135,6 +135,7 @@
     // Handle Form Submit to add new book copy
     document.getElementById('add-book-form').addEventListener('submit', async (e) => {
       e.preventDefault();
+      
       const payload = {
         title: document.getElementById('title').value,
         author: document.getElementById('author').value,
@@ -151,19 +152,27 @@
           body: JSON.stringify(payload)
         });
         const data = await res.json();
+        
         if (data.success) {
           alert('Book copy registered successfully!');
           
-          // Unhide the preview box first, then render the barcode onto the canvas
+          // 1. Unhide preview box
           const previewBox = document.getElementById('barcode-preview-box');
           previewBox.classList.remove('hidden');
 
-          JsBarcode("#barcode-canvas", payload.barcodeId, {
-            format: "CODE128",
-            width: 2,
-            height: 60,
-            displayValue: true
-          });
+          // 2. Render barcode onto canvas with a small timeout so layout is ready
+          setTimeout(() => {
+            try {
+              JsBarcode(document.getElementById('barcode-canvas'), payload.barcodeId, {
+                format: "CODE128",
+                width: 2,
+                height: 60,
+                displayValue: true
+              });
+            } catch (err) {
+              console.error("Barcode generation failed:", err);
+            }
+          }, 50);
 
           document.getElementById('preview-book-info').innerText = `${payload.title} (ISBN: ${payload.isbn || 'N/A'})`;
 
