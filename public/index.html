@@ -51,9 +51,12 @@
 
     <!-- Book Catalog Section -->
     <section class="space-y-4">
-      <div class="flex justify-between items-center">
+      <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
         <h2 class="text-xl font-bold text-slate-200">📖 Library Catalog</h2>
-        <button onclick="fetchBooks()" class="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition">🔄 Refresh</button>
+        <div class="flex gap-2">
+          <input type="text" id="search-input" oninput="filterBooks()" placeholder="Search title, author, ISBN, barcode..." class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 w-full sm:w-64">
+          <button onclick="fetchBooks()" class="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition whitespace-nowrap">🔄 Refresh</button>
+        </div>
       </div>
       <div id="book-list" class="grid gap-4 sm:grid-cols-2">
         <p class="text-slate-500 text-sm italic col-span-2">Loading library catalog...</p>
@@ -63,70 +66,92 @@
 
   <script>
     const API_URL = '/api/books';
+    let allBooks = [];
 
-    // Fetch, group by ISBN, and display books
+    // Fetch and store all books
     async function fetchBooks() {
       const container = document.getElementById('book-list');
       try {
         const res = await fetch(API_URL);
-        const books = await res.json();
-        
-        if (!books.length) {
-          container.innerHTML = `<p class="text-slate-500 text-sm italic col-span-2">No books found in the library database.</p>`;
-          return;
-        }
-
-        // Group books by ISBN (or Title as fallback if ISBN is empty)
-        const grouped = {};
-        books.forEach(book => {
-          const key = book.isbn ? book.isbn.trim() : book.title.trim().toLowerCase();
-          if (!grouped[key]) {
-            grouped[key] = {
-              title: book.title,
-              author: book.author,
-              isbn: book.isbn,
-              copies: []
-            };
-          }
-          grouped[key].copies.push({
-            id: book.id,
-            barcodeId: book.barcode_id,
-            status: book.status,
-            ownerId: book.owner_id
-          });
-        });
-
-        // Render grouped cards
-        container.innerHTML = Object.values(grouped).map(group => `
-          <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl space-y-3 shadow-md col-span-full">
-            <div class="flex justify-between items-start gap-2">
-              <div>
-                <h3 class="font-bold text-slate-100 text-lg">${escapeHtml(group.title)}</h3>
-                <p class="text-xs text-slate-400">by ${escapeHtml(group.author || 'Unknown')} | ISBN: <span class="text-indigo-300">${escapeHtml(group.isbn || 'N/A')}</span></p>
-              </div>
-              <span class="px-3 py-1 text-xs font-semibold rounded-full bg-indigo-950 text-indigo-400 border border-indigo-800">
-                Total Copies: ${group.copies.length}
-              </span>
-            </div>
-
-            <div class="space-y-2 pt-2 border-t border-slate-700/50">
-              <p class="text-xs font-semibold text-slate-400">Physical Copy Barcodes:</p>
-              <div class="grid gap-2 sm:grid-cols-2">
-                ${group.copies.map(copy => `
-                  <div class="flex justify-between items-center text-xs bg-slate-900 px-3 py-2 rounded-lg border border-slate-700">
-                    <span>Barcode: <code class="font-mono text-indigo-300 font-bold">${escapeHtml(copy.barcodeId)}</code></span>
-                    <span class="px-2 py-0.5 rounded-full font-semibold ${
-                      copy.status === 'available' ? 'text-emerald-400 bg-emerald-950/50 border border-emerald-800' : 'text-amber-400 bg-amber-950/50 border border-amber-800'
-                    }">${copy.status}</span>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-          </div>
-        `).join('');
+        allBooks = await res.json();
+        filterBooks(); // Apply search filter and render
       } catch (err) {
         container.innerHTML = `<p class="text-rose-400 text-sm col-span-2">Failed to load catalog: ${err.message}</p>`;
       }
+    }
+
+    // Filter books dynamically based on search input
+    function filterBooks() {
+      const query = document.getElementById('search-input').value.toLowerCase().trim();
+      const container = document.getElementById('book-list');
+
+      if (!allBooks.length) {
+        container.innerHTML = `<p class="text-slate-500 text-sm italic col-span-2">No books found in the library database.</p>`;
+        return;
+      }
+
+      // Filter matching title, author, isbn, or barcode_id
+      const filtered = allBooks.filter(book => {
+        const title = (book.title || '').toLowerCase();
+        const author = (book.author || '').toLowerCase();
+        const isbn = (book.isbn || '').toLowerCase();
+        const barcode = (book.barcode_id || '').toLowerCase();
+        return title.includes(query) || author.includes(query) || isbn.includes(query) || barcode.includes(query);
+      });
+
+      if (!filtered.length) {
+        container.innerHTML = `<p class="text-slate-500 text-sm italic col-span-2">No matching books found for "${escapeHtml(query)}".</p>`;
+        return;
+      }
+
+      // Group filtered books by ISBN (or Title fallback)
+      const grouped = {};
+      filtered.forEach(book => {
+        const key = book.isbn ? book.isbn.trim() : book.title.trim().toLowerCase();
+        if (!grouped[key]) {
+          grouped[key] = {
+            title: book.title,
+            author: book.author,
+            isbn: book.isbn,
+            copies: []
+          };
+        }
+        grouped[key].copies.push({
+          id: book.id,
+          barcodeId: book.barcode_id,
+          status: book.status,
+          ownerId: book.owner_id
+        });
+      });
+
+      // Render grouped cards
+      container.innerHTML = Object.values(grouped).map(group => `
+        <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl space-y-3 shadow-md col-span-full">
+          <div class="flex justify-between items-start gap-2">
+            <div>
+              <h3 class="font-bold text-slate-100 text-lg">${escapeHtml(group.title)}</h3>
+              <p class="text-xs text-slate-400">by ${escapeHtml(group.author || 'Unknown')} | ISBN: <span class="text-indigo-300">${escapeHtml(group.isbn || 'N/A')}</span></p>
+            </div>
+            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-indigo-950 text-indigo-400 border border-indigo-800">
+              Total Copies: ${group.copies.length}
+            </span>
+          </div>
+
+          <div class="space-y-2 pt-2 border-t border-slate-700/50">
+            <p class="text-xs font-semibold text-slate-400">Physical Copy Barcodes:</p>
+            <div class="grid gap-2 sm:grid-cols-2">
+              ${group.copies.map(copy => `
+                <div class="flex justify-between items-center text-xs bg-slate-900 px-3 py-2 rounded-lg border border-slate-700">
+                  <span>Barcode: <code class="font-mono text-indigo-300 font-bold">${escapeHtml(copy.barcodeId)}</code></span>
+                  <span class="px-2 py-0.5 rounded-full font-semibold ${
+                    copy.status === 'available' ? 'text-emerald-400 bg-emerald-950/50 border border-emerald-800' : 'text-amber-400 bg-amber-950/50 border border-amber-800'
+                  }">${copy.status}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `).join('');
     }
 
     // Handle Form Submit
