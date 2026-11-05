@@ -1,8 +1,17 @@
 import express from 'express';
 import { neon } from '@neondatabase/serverless';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const app = express();
 app.use(express.json()); // Allows parsing JSON request bodies
+
+// Set up directory path for ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Serve static frontend files from the "public" folder
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Connect to Neon DB using your connection string from .env
 const sql = neon(process.env.DATABASE_URL);
@@ -50,7 +59,6 @@ app.put('/api/books/:id', async (req, res) => {
   const { userId, newDescription } = req.body;
 
   try {
-    // 1. Check who owns this book in the database
     const books = await sql`
       SELECT owner_id FROM books WHERE id = ${bookId}
     `;
@@ -61,12 +69,10 @@ app.put('/api/books/:id', async (req, res) => {
 
     const book = books[0];
 
-    // 2. Verify if the user making the request is the actual owner
     if (book.owner_id !== userId) {
       return res.status(403).json({ error: "Unauthorized: Only the owner can edit this book." });
     }
 
-    // 3. If they are the owner, proceed with updating the description
     const updatedBook = await sql`
       UPDATE books 
       SET description = ${newDescription} 
@@ -92,20 +98,16 @@ app.post('/api/loans', async (req, res) => {
   const { bookId, borrowerId, dueDays = 14 } = req.body;
   
   try {
-    // Check if the book is actually available
     const [book] = await sql`SELECT status FROM books WHERE id = ${bookId}`;
     if (!book || book.status !== 'available') {
       return res.status(400).json({ error: "Book is not available for borrowing." });
     }
     
-    // Calculate due date (default: 14 days from today)
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + dueDays);
 
-    // Update book status to 'borrowed'
     await sql`UPDATE books SET status = 'borrowed' WHERE id = ${bookId}`;
 
-    // Create the loan record
     const [loan] = await sql`
       INSERT INTO loans (book_id, borrower_id, due_date)
       VALUES (${bookId}, ${borrowerId}, ${dueDate.toISOString()})
@@ -125,16 +127,12 @@ app.put('/api/loans/:id/return', async (req, res) => {
   const loanId = req.params.id;
   
   try {
-    // Find active loan
     const [loan] = await sql`SELECT book_id FROM loans WHERE id = ${loanId} AND returned_date IS NULL`;
     if (!loan) {
       return res.status(404).json({ error: "Active loan record not found." });
     }
 
-    // Mark loan as returned
     await sql`UPDATE loans SET returned_date = NOW() WHERE id = ${loanId}`;
-
-    // Set book status back to 'available'
     await sql`UPDATE books SET status = 'available' WHERE id = ${loan.book_id}`;
 
     res.json({ success: true, message: "Book returned successfully!" });
@@ -143,7 +141,13 @@ app.put('/api/loans/:id/return', async (req, res) => {
   }
 });
 
-// Start the server
-app.listen(3000, () => {
-  console.log('Server running on port 3000');
+// Catch-all route to serve index.html for any frontend navigation
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Start the server (uses Render's dynamic port or falls back to 3000 locally)
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
