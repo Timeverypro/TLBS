@@ -14,47 +14,74 @@
     <!-- Header -->
     <header class="text-center space-y-2">
       <h1 class="text-3xl font-extrabold text-indigo-400">📚 Community Library System</h1>
-      <p class="text-slate-400">Cataloging, ISBN grouping, barcode scanning, and loan tracking</p>
+      <p class="text-slate-400">Cataloging, ISBN grouping, member management, and loan tracking</p>
     </header>
 
-    <!-- Top Grid: Add Book & Checkout/Return Panels -->
+    <!-- Top Grid: Forms & Actions -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       
-      <!-- Left: Add Book Form -->
-      <section class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
-        <h2 class="text-xl font-bold text-slate-200">➕ Add Book Copy</h2>
-        <form id="add-book-form" class="space-y-3">
-          <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1">Book Title</label>
-            <input type="text" id="title" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="e.g., Mathematics Vol. 1">
-          </div>
-          <div class="grid grid-cols-2 gap-2">
+      <!-- Left Column: Add Book & Register User -->
+      <div class="space-y-6">
+        <!-- Add Book Form -->
+        <section class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+          <h2 class="text-xl font-bold text-slate-200">➕ Add Book Copy</h2>
+          <form id="add-book-form" class="space-y-3">
             <div>
-              <label class="block text-xs font-semibold text-slate-400 mb-1">Author</label>
-              <input type="text" id="author" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Author name">
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Book Title</label>
+              <input type="text" id="title" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="e.g., Mathematics Vol. 1">
             </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-400 mb-1">ISBN</label>
-              <input type="text" id="isbn" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="978-...">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Author</label>
+                <input type="text" id="author" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Author name">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">ISBN</label>
+                <input type="text" id="isbn" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="978-...">
+              </div>
             </div>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-xs font-semibold text-slate-400 mb-1">Barcode ID</label>
-              <input type="text" id="barcodeId" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-indigo-300 focus:outline-none focus:border-indigo-500" placeholder="e.g., 12121">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Barcode ID</label>
+                <input type="text" id="barcodeId" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-indigo-300 focus:outline-none focus:border-indigo-500" placeholder="e.g., 12121">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Owner User ID</label>
+                <input type="number" id="ownerId" value="1" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100">
+              </div>
             </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-400 mb-1">Owner User ID</label>
-              <input type="number" id="ownerId" value="1" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100">
-            </div>
-          </div>
-          <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 font-semibold text-sm rounded-lg transition shadow-lg shadow-indigo-600/20">
-            Save Book Copy
-          </button>
-        </form>
-      </section>
+            <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 font-semibold text-sm rounded-lg transition shadow-lg shadow-indigo-600/20">
+              Save Book Copy
+            </button>
+          </form>
+        </section>
 
-      <!-- Right: Checkout / Return Action Panel & Camera Scanner -->
+        <!-- Register Member Form -->
+        <section class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+          <h2 class="text-xl font-bold text-slate-200">👤 Register New Member</h2>
+          <form id="add-user-form" class="space-y-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Full Name</label>
+              <input type="text" id="user-name" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="e.g., Sarah Smith">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Email</label>
+              <input type="email" id="user-email" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="sarah@example.com">
+            </div>
+            <button type="submit" class="w-full py-2.5 bg-teal-600 hover:bg-teal-500 font-semibold text-sm rounded-lg transition shadow-lg shadow-teal-600/20">
+              Register Member
+            </button>
+          </form>
+          <div class="pt-2 border-t border-slate-700">
+            <p class="text-xs font-semibold text-slate-400 mb-2">Registered Members Directory:</p>
+            <div id="user-list" class="max-h-28 overflow-y-auto space-y-1 text-xs text-slate-300">
+              <span class="italic text-slate-500">Loading members...</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right Column: Checkout / Return Action Panel & Camera Scanner -->
       <section class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
         <h2 class="text-xl font-bold text-slate-200">🔄 Checkout / Return</h2>
         
@@ -71,7 +98,7 @@
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-400 mb-1">Borrower User ID (For Checkout)</label>
-            <input type="number" id="borrower-id" value="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100">
+            <input type="number" id="borrower-id" value="1" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100">
           </div>
           <div class="grid grid-cols-2 gap-3 pt-2">
             <button onclick="handleLoan('borrow')" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 font-semibold text-sm rounded-lg transition shadow-lg shadow-emerald-600/20">
@@ -91,8 +118,8 @@
       <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
         <h2 class="text-xl font-bold text-slate-200">📖 Library Catalog & Loans</h2>
         <div class="flex gap-2">
-          <input type="text" id="search-input" oninput="filterBooks()" placeholder="Search title, author, ISBN, barcode..." class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 w-full sm:w-64">
-          <button onclick="fetchBooks()" class="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition whitespace-nowrap">🔄 Refresh</button>
+          <input type="text" id="search-input" oninput="filterBooks()" placeholder="Search title, author, ISBN, borrower..." class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500 w-full sm:w-64">
+          <button onclick="fetchData()" class="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition whitespace-nowrap">🔄 Refresh</button>
         </div>
       </div>
       <div id="book-list" class="grid gap-4 sm:grid-cols-2">
@@ -102,13 +129,41 @@
   </div>
 
   <script>
-    const API_URL = '/api/books';
+    const API_BOOKS = '/api/books';
+    const API_USERS = '/api/users';
     let allBooks = [];
+
+    async function fetchData() {
+      await fetchUsers();
+      await fetchBooks();
+    }
+
+    async function fetchUsers() {
+      const userListContainer = document.getElementById('user-list');
+      try {
+        const res = await fetch(API_USERS);
+        const users = await res.json();
+        
+        if (!users.length) {
+          userListContainer.innerHTML = `<span class="italic text-slate-500">No members registered yet.</span>`;
+          return;
+        }
+
+        userListContainer.innerHTML = users.map(u => `
+          <div class="flex justify-between items-center bg-slate-900 px-2.5 py-1 rounded border border-slate-700/60">
+            <span>ID <strong>${u.id}</strong>: ${escapeHtml(u.full_name)}</span>
+            <span class="text-slate-500 text-[10px]">${escapeHtml(u.email)}</span>
+          </div>
+        `).join('');
+      } catch (err) {
+        userListContainer.innerHTML = `<span class="text-rose-400">Failed to load members</span>`;
+      }
+    }
 
     async function fetchBooks() {
       const container = document.getElementById('book-list');
       try {
-        const res = await fetch(API_URL);
+        const res = await fetch(API_BOOKS);
         allBooks = await res.json();
         filterBooks();
       } catch (err) {
@@ -213,7 +268,7 @@
       };
 
       try {
-        const res = await fetch(API_URL, {
+        const res = await fetch(API_BOOKS, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -223,6 +278,33 @@
           alert('Book added successfully!');
           fetchBooks();
           document.getElementById('add-book-form').reset();
+        } else {
+          alert('Error: ' + data.error);
+        }
+      } catch (err) {
+        alert('Failed to connect to server.');
+      }
+    });
+
+    // Handle Register User
+    document.getElementById('add-user-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = {
+        fullName: document.getElementById('user-name').value,
+        email: document.getElementById('user-email').value,
+      };
+
+      try {
+        const res = await fetch(API_USERS, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(`Member registered successfully! User ID is ${data.user.id}`);
+          fetchUsers();
+          document.getElementById('add-user-form').reset();
         } else {
           alert('Error: ' + data.error);
         }
@@ -277,7 +359,7 @@
     const html5QrcodeScanner = new Html5QrcodeScanner("action-reader", { fps: 10, qrbox: { width: 220, height: 120 } }, false);
     html5QrcodeScanner.render(onScanSuccess);
 
-    fetchBooks();
+    fetchData();
   </script>
 </body>
 </html>

@@ -49,7 +49,32 @@ app.post('/api/books', async (req, res) => {
   }
 });
 
-// 3. BORROW BOOK BY BARCODE ID
+// 3. GET ALL USERS (Members / Borrowers)
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await sql`SELECT id, full_name, email, role FROM users ORDER BY id ASC`;
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4. REGISTER A NEW USER / BORROWER
+app.post('/api/users', async (req, res) => {
+  const { fullName, email, role = 'member' } = req.body;
+  try {
+    const [newUser] = await sql`
+      INSERT INTO users (full_name, email, role)
+      VALUES (${fullName}, ${email}, ${role})
+      RETURNING *;
+    `;
+    res.status(201).json({ success: true, user: newUser });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 5. BORROW BOOK BY BARCODE ID
 app.post('/api/borrow', async (req, res) => {
   const { barcodeId, borrowerId, dueDays = 14 } = req.body;
   try {
@@ -78,7 +103,7 @@ app.post('/api/borrow', async (req, res) => {
   }
 });
 
-// 4. RETURN BOOK BY BARCODE ID
+// 6. RETURN BOOK BY BARCODE ID
 app.post('/api/return', async (req, res) => {
   const { barcodeId } = req.body;
   try {
