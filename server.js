@@ -52,20 +52,22 @@ app.post('/api/books', async (req, res) => {
 // 3. GET ALL USERS (Members / Borrowers)
 app.get('/api/users', async (req, res) => {
   try {
-    const users = await sql`SELECT id, full_name, email, role FROM users ORDER BY id ASC`;
+    const users = await sql`SELECT id, full_name, role FROM users ORDER BY id ASC`;
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// 4. REGISTER A NEW USER / BORROWER
+// 4. REGISTER A NEW USER / BORROWER (Without email)
 app.post('/api/users', async (req, res) => {
-  const { fullName, email, role = 'member' } = req.body;
+  const { fullName, role = 'member' } = req.body;
   try {
+    // Generate a unique dummy email behind the scenes to satisfy database constraints
+    const dummyEmail = `user_${Date.now()}_${Math.floor(Math.random() * 1000)}@library.local`;
     const [newUser] = await sql`
       INSERT INTO users (full_name, email, role)
-      VALUES (${fullName}, ${email}, ${role})
+      VALUES (${fullName}, ${dummyEmail}, ${role})
       RETURNING *;
     `;
     res.status(201).json({ success: true, user: newUser });
