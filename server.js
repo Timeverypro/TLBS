@@ -74,9 +74,9 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
-// 5. BORROW BOOK BY BARCODE ID
+// 5. BORROW BOOK BY BARCODE ID (Using Manual Due Date)
 app.post('/api/borrow', async (req, res) => {
-  const { barcodeId, borrowerId, dueDays = 14 } = req.body;
+  const { barcodeId, borrowerId, dueDate } = req.body;
   try {
     const [book] = await sql`SELECT id, status FROM books WHERE barcode_id = ${barcodeId}`;
     if (!book) {
@@ -85,15 +85,15 @@ app.post('/api/borrow', async (req, res) => {
     if (book.status !== 'available') {
       return res.status(400).json({ error: "This physical book copy is already borrowed." });
     }
-    
-    const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + dueDays);
+    if (!dueDate) {
+      return res.status(400).json({ error: "Please select a due date." });
+    }
 
     await sql`UPDATE books SET status = 'borrowed' WHERE id = ${book.id}`;
 
     const [loan] = await sql`
       INSERT INTO loans (book_id, borrower_id, due_date)
-      VALUES (${book.id}, ${borrowerId}, ${dueDate.toISOString()})
+      VALUES (${book.id}, ${borrowerId}, ${dueDate})
       RETURNING *;
     `;
 
