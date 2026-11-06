@@ -5,49 +5,86 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Community Library System</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Barcode & QR Scanner Library -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-8">
 
-  <div class="max-w-3xl mx-auto space-y-8">
+  <div class="max-w-4xl mx-auto space-y-8">
     <!-- Header -->
     <header class="text-center space-y-2">
       <h1 class="text-3xl font-extrabold text-indigo-400">📚 Community Library System</h1>
-      <p class="text-slate-400">Manual cataloging & physical copy tracking via ISBN and custom barcodes</p>
+      <p class="text-slate-400">Cataloging, ISBN grouping, barcode scanning, and loan management</p>
     </header>
 
-    <!-- Add Book Form Section -->
-    <section class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
-      <h2 class="text-xl font-bold text-slate-200">➕ Add Book Copy (Manual Input)</h2>
-      <form id="add-book-form" class="space-y-3">
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1">Book Title</label>
-          <input type="text" id="title" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="e.g., Mathematics Vol. 1">
+    <!-- Top Grid: Add Book & Checkout/Return Panels -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      <!-- Left: Add Book Form -->
+      <section class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+        <h2 class="text-xl font-bold text-slate-200">➕ Add Book Copy</h2>
+        <form id="add-book-form" class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Book Title</label>
+            <input type="text" id="title" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="e.g., Mathematics Vol. 1">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Author</label>
+              <input type="text" id="author" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Author name">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">ISBN</label>
+              <input type="text" id="isbn" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="978-...">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Barcode ID</label>
+              <input type="text" id="barcodeId" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-indigo-300 focus:outline-none focus:border-indigo-500" placeholder="e.g., 12121">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1">Owner User ID</label>
+              <input type="number" id="ownerId" value="1" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100">
+            </div>
+          </div>
+          <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 font-semibold text-sm rounded-lg transition shadow-lg shadow-indigo-600/20">
+            Save Book Copy
+          </button>
+        </form>
+      </section>
+
+      <!-- Right: Checkout / Return Action Panel & Camera Scanner -->
+      <section class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+        <h2 class="text-xl font-bold text-slate-200">🔄 Checkout / Return</h2>
+        
+        <!-- Camera Scanner for Actions -->
+        <div class="space-y-1">
+          <label class="block text-xs font-semibold text-slate-400">Scan Barcode with Camera</label>
+          <div id="action-reader" class="w-full bg-slate-950 rounded-xl overflow-hidden border border-slate-700 text-xs"></div>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+        <div class="space-y-3 pt-2">
           <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1">Author</label>
-            <input type="text" id="author" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="Author name">
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Physical Copy Barcode ID (Scanned or Typed)</label>
+            <input type="text" id="action-barcode" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-indigo-300 focus:outline-none focus:border-indigo-500" placeholder="Scan or type barcode...">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1">ISBN (For Title Grouping)</label>
-            <input type="text" id="isbn" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500" placeholder="978-...">
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Borrower User ID (For Checkout)</label>
+            <input type="number" id="borrower-id" value="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100">
+          </div>
+          <div class="grid grid-cols-2 gap-3 pt-2">
+            <button onclick="handleLoan('borrow')" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 font-semibold text-sm rounded-lg transition shadow-lg shadow-emerald-600/20">
+              📥 Borrow Book
+            </button>
+            <button onclick="handleLoan('return')" class="w-full py-2.5 bg-amber-600 hover:bg-amber-500 font-semibold text-sm rounded-lg transition shadow-lg shadow-amber-600/20">
+              📤 Return Book
+            </button>
           </div>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1">Custom Physical Barcode ID</label>
-            <input type="text" id="barcodeId" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-indigo-300 focus:outline-none focus:border-indigo-500" placeholder="e.g., TLBS-COPY-001">
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1">Owner User ID</label>
-            <input type="number" id="ownerId" value="1" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100">
-          </div>
-        </div>
-        <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 font-semibold text-sm rounded-lg transition shadow-lg shadow-indigo-600/20">
-          Save Book to Catalog
-        </button>
-      </form>
-    </section>
+      </section>
+
+    </div>
 
     <!-- Book Catalog Section -->
     <section class="space-y-4">
@@ -68,19 +105,17 @@
     const API_URL = '/api/books';
     let allBooks = [];
 
-    // Fetch and store all books
     async function fetchBooks() {
       const container = document.getElementById('book-list');
       try {
         const res = await fetch(API_URL);
         allBooks = await res.json();
-        filterBooks(); // Apply search filter and render
+        filterBooks();
       } catch (err) {
         container.innerHTML = `<p class="text-rose-400 text-sm col-span-2">Failed to load catalog: ${err.message}</p>`;
       }
     }
 
-    // Filter books dynamically based on search input
     function filterBooks() {
       const query = document.getElementById('search-input').value.toLowerCase().trim();
       const container = document.getElementById('book-list');
@@ -90,7 +125,6 @@
         return;
       }
 
-      // Filter matching title, author, isbn, or barcode_id
       const filtered = allBooks.filter(book => {
         const title = (book.title || '').toLowerCase();
         const author = (book.author || '').toLowerCase();
@@ -104,7 +138,6 @@
         return;
       }
 
-      // Group filtered books by ISBN (or Title fallback)
       const grouped = {};
       filtered.forEach(book => {
         const key = book.isbn ? book.isbn.trim() : book.title.trim().toLowerCase();
@@ -124,7 +157,6 @@
         });
       });
 
-      // Render grouped cards
       container.innerHTML = Object.values(grouped).map(group => `
         <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl space-y-3 shadow-md col-span-full">
           <div class="flex justify-between items-start gap-2">
@@ -138,7 +170,7 @@
           </div>
 
           <div class="space-y-2 pt-2 border-t border-slate-700/50">
-            <p class="text-xs font-semibold text-slate-400">Physical Copy Barcodes:</p>
+            <p class="text-xs font-semibold text-slate-400">Physical Copy Barcodes & Status:</p>
             <div class="grid gap-2 sm:grid-cols-2">
               ${group.copies.map(copy => `
                 <div class="flex justify-between items-center text-xs bg-slate-900 px-3 py-2 rounded-lg border border-slate-700">
@@ -154,10 +186,9 @@
       `).join('');
     }
 
-    // Handle Form Submit
+    // Handle Add Book
     document.getElementById('add-book-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      
       const payload = {
         title: document.getElementById('title').value,
         author: document.getElementById('author').value,
@@ -174,7 +205,6 @@
           body: JSON.stringify(payload)
         });
         const data = await res.json();
-        
         if (data.success) {
           alert('Book added successfully!');
           fetchBooks();
@@ -187,10 +217,52 @@
       }
     });
 
+    // Handle Borrow / Return Action
+    async function handleLoan(action) {
+      const barcodeId = document.getElementById('action-barcode').value.trim();
+      const borrowerId = parseInt(document.getElementById('borrower-id').value);
+
+      if (!barcodeId) {
+        alert('Please scan or enter a physical copy barcode ID.');
+        return;
+      }
+
+      const endpoint = action === 'borrow' ? '/api/borrow' : '/api/return';
+      const payload = action === 'borrow' ? { barcodeId, borrowerId } : { barcodeId };
+
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          alert(data.message);
+          fetchBooks();
+          document.getElementById('action-barcode').value = '';
+        } else {
+          alert('Error: ' + data.error);
+        }
+      } catch (err) {
+        alert('Failed to connect to server.');
+      }
+    }
+
     function escapeHtml(str) {
       if (!str) return '';
       return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
+
+    // Initialize Camera Barcode Scanner for Actions
+    function onScanSuccess(decodedText) {
+      document.getElementById('action-barcode').value = decodedText;
+      // Optional: Play a short beep or give subtle feedback
+    }
+
+    const html5QrcodeScanner = new Html5QrcodeScanner("action-reader", { fps: 10, qrbox: { width: 220, height: 120 } }, false);
+    html5QrcodeScanner.render(onScanSuccess);
 
     fetchBooks();
   </script>

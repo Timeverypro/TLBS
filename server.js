@@ -4,21 +4,16 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const app = express();
-app.use(express.json()); // Allows parsing JSON request bodies
+app.use(express.json());
 
-// Set up directory path for ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Serve static frontend files from the "public" folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Connect to Neon DB using your connection string from .env
 const sql = neon(process.env.DATABASE_URL);
 
-// ==========================================
-// 1. GET ALL BOOKS (Catalog view with owner names)
-// ==========================================
+// 1. GET ALL BOOKS
 app.get('/api/books', async (req, res) => {
   try {
     const books = await sql`
@@ -33,12 +28,9 @@ app.get('/api/books', async (req, res) => {
   }
 });
 
-// ==========================================
-// 2. ADD A NEW BOOK (With ISBN & custom barcode)
-// ==========================================
+// 2. ADD A NEW BOOK COPY
 app.post('/api/books', async (req, res) => {
   const { ownerId, title, author, description, barcodeId, isbn } = req.body;
-  
   try {
     const [newBook] = await sql`
       INSERT INTO books (owner_id, title, author, description, barcode_id, isbn)
@@ -51,66 +43,26 @@ app.post('/api/books', async (req, res) => {
   }
 });
 
-// ==========================================
-// 3. UPDATE BOOK DESCRIPTION (Owner Only)
-// ==========================================
-app.put('/api/books/:id', async (req, res) => {
-  const bookId = req.params.id;
-  const { userId, newDescription } = req.body;
-
+// 3. BORROW BOOK BY BARCODE ID
+app.post('/api/borrow', async (req, res) => {
+  const { barcodeId, borrowerId, dueDays = 14 } = req.body;
   try {
-    const books = await sql`
-      SELECT owner_id FROM books WHERE id = ${bookId}
-    `;
-
-    if (books.length === 0) {
-      return res.status(404).json({ error: "Book not found." });
+    const [book] = await sql`SELECT id, status FROM books WHERE barcode_id = ${barcodeId}`;
+    if (!book) {
+      return res.status(404).json({ error: "Book with this Barcode ID not found." });
     }
-
-    const book = books[0];
-
-    if (book.owner_id !== userId) {
-      return res.status(403).json({ error: "Unauthorized: Only the owner can edit this book." });
-    }
-
-    const updatedBook = await sql`
-      UPDATE books 
-      SET description = ${newDescription} 
-      WHERE id = ${bookId}
-      RETURNING *;
-    `;
-
-    res.json({ 
-      success: true, 
-      message: "Book updated successfully!", 
-      book: updatedBook[0] 
-    });
-
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ==========================================
-// 4. BORROW A BOOK (Checks out and sets due date)
-// ==========================================
-app.post('/api/loans', async (req, res) => {
-  const { bookId, borrowerId, dueDays = 14 } = req.body;
-  
-  try {
-    const [book] = await sql`SELECT status FROM books WHERE id = ${bookId}`;
-    if (!book || book.status !== 'available') {
-      return res.status(400).json({ error: "Book is not available for borrowing." });
+    if (book.status !== 'available') {
+      return res.status(400).json({ error: "This physical book copy is already borrowed." });
     }
     
     const dueDate = new Date();
     dueDate.setDate(dueDate.getDate() + dueDays);
 
-    await sql`UPDATE books SET status = 'borrowed' WHERE id = ${bookId}`;
+    await sql`UPDATE books SET status = 'borrowed' WHERE id = ${book.id}`;
 
     const [loan] = await sql`
       INSERT INTO loans (book_id, borrower_id, due_date)
-      VALUES (${bookId}, ${borrowerId}, ${dueDate.toISOString()})
+      VALUES (${book.id}, ${borrowerId}, ${dueDate.toISOString()})
       RETURNING *;
     `;
 
@@ -120,20 +72,27 @@ app.post('/api/loans', async (req, res) => {
   }
 });
 
-// ==========================================
-// 5. RETURN A BOOK (Makes it available again)
-// ==========================================
-app.put('/api/loans/:id/return', async (req, res) => {
-  const loanId = req.params.id;
-  
+// 4. RETURN BOOK BY BARCODE ID
+app.post('/api/return', async (req, res) => {
+  const { barcodeId } = req.body;
   try {
-    const [loan] = await sql`SELECT book_id FROM loans WHERE id = ${loanId} AND returned_date IS NULL`;
-    if (!loan) {
-      return res.status(404).json({ error: "Active loan record not found." });
+    const [book] = await sql`SELECT id, status FROM books WHERE barcode_id = ${barcodeId}`;
+    if (!book) {
+      return res.status(404).json({ error: "Book with this Barcode ID not found." });
+    }
+    if (book.status !== 'borrowed') {
+      return res.status(400).json({ error: "This book copy is not currently marked as borrowed." });
     }
 
-    await sql`UPDATE loans SET returned_date = NOW() WHERE id = ${loanId}`;
-    await sql`UPDATE books SET status = 'available' WHERE id = ${loan.book_id}`;
+    const [loan] = await sql`
+      SELECT id FROM loans WHERE book_id = ${book.id} AND returned_date IS NULL
+    `;
+    
+    if (loan) {
+      await sql`UPDATE loans SET returned_date = NOW() WHERE id = ${loan.id}`;
+    }
+
+    await sql`UPDATE books SET status = 'available' WHERE id = ${book.id}`;
 
     res.json({ success: true, message: "Book returned successfully!" });
   } catch (err) {
@@ -141,12 +100,10 @@ app.put('/api/loans/:id/return', async (req, res) => {
   }
 });
 
-// Catch-all route using a Regex to avoid path-to-regexp parsing errors
 app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
