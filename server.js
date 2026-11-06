@@ -13,13 +13,19 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const sql = neon(process.env.DATABASE_URL);
 
-// 1. GET ALL BOOKS
+// 1. GET ALL BOOKS (Includes active loan & borrower details)
 app.get('/api/books', async (req, res) => {
   try {
     const books = await sql`
-      SELECT books.*, users.full_name as owner_name 
+      SELECT books.*, 
+             users.full_name as owner_name,
+             loans.loan_date,
+             loans.due_date,
+             borrower.full_name as borrower_name
       FROM books 
       JOIN users ON books.owner_id = users.id
+      LEFT JOIN loans ON loans.book_id = books.id AND loans.returned_date IS NULL
+      LEFT JOIN users borrower ON loans.borrower_id = borrower.id
       ORDER BY books.created_at DESC
     `;
     res.json(books);
